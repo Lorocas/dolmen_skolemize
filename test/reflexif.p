@@ -16,10 +16,6 @@ fof(axiome3, axiom,
    to_be_skolemized(ax3_sk)
 ).
 
-fof(axiome4, axiom, 
-   ?[X] : ?[Y] : r(X,Y)
-).
-
 
 % ![X: element] : ?[Y: element] : r(X,Y)
 % ![X] : r(X,ax3_sk(X))

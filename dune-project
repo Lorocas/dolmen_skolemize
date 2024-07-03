@@ -5,7 +5,7 @@
 (generate_opam_files true)
 
 (source
- (github username/reponame))
+ (github Lorocas/dolmen_skolemize))
 
 (authors "Lorenzo LUCAS -- ROBLOT, Quentin PEPE")
 
