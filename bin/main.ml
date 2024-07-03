@@ -434,25 +434,14 @@ let output_skolemized_statements out statements =
     statements
 ;;
 
-(** [write_signature] Write the signature to a file named 'signature.lp'. 
-    NOTE: the file is created in the same repersitory of the executable 'dolmen_skolemize' *)
-(* let write_signature name term =
-  let file_name = "signature.lp" in
-  if Sys.file_exists file_name then Sys.remove file_name;
-  Printf.printf "WRITE_SIGNATURE | %s\n" name;
-  let formatted_term = Format.asprintf "%a" print_term term in
-  let signature = Format.sprintf "symbol %s : ϵ (%s)\n" name formatted_term in
-  let oc = open_out_gen [Open_creat; Open_text; Open_append] 0o666 file_name in
-  output_string oc signature;
-  close_out oc
-;; *)
-
 (** [write_signature] writes the signature to a file named 'signature.lp'. 
     NOTE: the file is created in the same repersitory of the executable 'dolmen_skolemize' *)
 let write_signature fmt name s =
   Printf.printf "WRITE_SIGNATURE | %s\n" name;
-  let signature = Format.sprintf "symbol %s : ϵ %s\n" name s in
-  Format.fprintf fmt "%s@." signature;
+  let signature = Format.sprintf "symbol %s : ϵ %s;" name s in
+  Format.fprintf fmt "%s\n" signature;
+  Format.fprintf fmt "builtin \"Axiom\" ≔ %s;\n" name;
+  Format.fprintf fmt "builtin \"SkolemizedAxiom\" ≔ sk_%s;@." name;
 ;;
 
 (** [print_signature] writes all the necessary axioms and builtin to use SKonverto
@@ -478,14 +467,36 @@ let print_signature fmt stmt =
   | _ -> ()
 ;;
 
+(* Add all the skolem formula in the signature file *)
+let rec add_skolem_formula fmt n b =
+  if b then 
+    if n = 0 then ()
+    else begin
+      Format.fprintf fmt "builtin \"Skolem\" ≔ f_%d;\n" n; 
+      (* Printf.printf "f_%d printed!" n; *)
+      add_skolem_formula fmt (n-1) true;
+    end
+  else 
+    if n = 0 then ()
+    else begin
+      Format.fprintf fmt "builtin \"Skolem\" ≔ c_%d;\n" n; 
+      (* Printf.printf "c_%d printed!" n; *)
+      add_skolem_formula fmt (n-1) false;
+    end
+;;
+
 (** [output_signature] iterates print of the statements in the file [out] of all the statements in [statements] *)
 let output_signature out statements = 
   let fmt = Format.formatter_of_out_channel out in
+  Format.fprintf fmt "require open Logic.Zenon.FOL Logic.Zenon.LL Logic.Zenon.ND Logic.Zenon.ND_eps Logic.Zenon.ND_eps_full Logic.Zenon.ND_eps_aux Logic.Zenon.LL_ND Logic.Zenon.zen;@.@.";
   List.iter
     (fun stmt ->
       print_signature fmt stmt;
       Format.fprintf fmt "")
-    statements
+    statements;
+  Format.fprintf fmt "@.@.// Other builtin@.@.builtin \"Formula\" ≔ zenon_G;\nbuiltin \"⇒\" ≔ ⇒;\nbuiltin \"∀\" ≔ ∀;\nbuiltin \"∃\" ≔ ∃;\nbuiltin \"τ\" ≔ τ;\nbuiltin \"ϵ\" ≔ ϵ;\nbuiltin \"⊥\" ≔ ⊥;\nbuiltin \"∃E\" ≔ ∃E;\nbuiltin \"κ\" ≔ κ;\n";
+  add_skolem_formula fmt (!fresh_func_counter) true;
+  add_skolem_formula fmt (!fresh_const_counter) false;
 ;;
 
 (* NOTE: Possibility to add an argument to choose the signature file. *)
@@ -498,16 +509,6 @@ let () =
     let output_file = Sys.argv.(2) in
     let _, statements = TptpParser.parse_file input_file in
 
-    (* Creation of the file 'signature.lp' *)
-    let file_name = "signature.lp" in
-    if Sys.file_exists file_name then Sys.remove file_name;
-    let signature_file = open_out_gen [Open_creat; Open_text; Open_append] 0o666 file_name in
-
-    (* Update of the file 'signature.lp' *)
-    output_signature signature_file statements;
-    close_out signature_file;
-    if file_name <> "-" then Printf.printf "Signature written to %s\n" file_name;
-
     (* Parse and skolemize the problem *)
     let skolemized_statements = List.map skolemize_statement statements in
     if output_file = "-"
@@ -518,5 +519,17 @@ let () =
       output_skolemized_statements out skolemized_statements;
       close_out out;
       if output_file <> "-"
-      then Printf.printf "Skolemized TPTP file written to %s\n" output_file))
+      then Printf.printf "Skolemized TPTP file written to %s\n" output_file
+    );
+
+    (* Creation of the file 'signature.lp' *)
+    let file_name = "signature.lp" in
+    if Sys.file_exists file_name then Sys.remove file_name;
+    let signature_file = open_out_gen [Open_creat; Open_text; Open_append] 0o666 file_name in
+
+    (* Update of the file 'signature.lp' *)
+    output_signature signature_file statements;
+    close_out signature_file;
+    if file_name <> "-" then Printf.printf "Signature written to %s\n" file_name;
+  )
 ;;
