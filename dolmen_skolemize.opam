@@ -7,7 +7,7 @@ maintainer: ["Lorenzo LUCAS -- ROBLOT, Quentin PEPE"]
 authors: ["Lorenzo LUCAS -- ROBLOT, Quentin PEPE"]
 tags: ["Dolmen" "Skolemization" "Skolem"]
 homepage: "https://github.com/Lorocas/dolmen_skolemize"
-# bug-reports: "https://github.com/username/reponame/issues"
+bug-reports: "https://github.com/Lorocas/dolmen_skolemize/issues"
 depends: [
   "ocaml"
   "dune" {>= "3.16"}
