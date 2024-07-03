@@ -1,0 +1,5 @@
+_build
+test/*.lp
+zenon_modulo
+dolmen_skolemize
+signature.lp

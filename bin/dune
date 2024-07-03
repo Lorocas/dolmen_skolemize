@@ -1,0 +1,15 @@
+(executable
+ (public_name dolmen_skolemize)
+ (name main)
+ (libraries dolmen_skolemize dolmen.std dolmen.intf dolmen_loop dolmen_model dolmen_type dolmen.tptp dolmen.tptp.v6_3_0 fmt)
+ (modules ; main
+  main
+ ))
+
+(executable
+ (public_name ttf)
+ (name ttf)
+ (libraries dolmen_skolemize dolmen.std dolmen.intf dolmen_loop dolmen_model dolmen_type dolmen.tptp dolmen.tptp.v6_3_0 fmt)
+ (modules ; main
+  ttf
+ ))
