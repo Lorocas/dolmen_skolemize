@@ -436,17 +436,16 @@ let output_skolemized_statements out statements =
 
 (** [write_signature] writes the signature to a file named 'signature.lp'. 
     NOTE: the file is created in the same repersitory of the executable 'dolmen_skolemize' *)
-let write_signature fmt name s =
-  Printf.printf "WRITE_SIGNATURE | %s\n" name;
-  let signature = Format.sprintf "symbol %s : ϵ %s;" name s in
-  Format.fprintf fmt "%s\n" signature;
+let write_builtin fmt name s =
+  Printf.printf "WRITE_BUILTIN | %s\n" name;
+  let builtin = Format.sprintf "symbol %s : ϵ %s;" name s in
+  Format.fprintf fmt "%s\n" builtin;
   Format.fprintf fmt "builtin \"Axiom\" ≔ %s;\n" name;
   Format.fprintf fmt "builtin \"SkolemizedAxiom\" ≔ sk_%s;@." name;
 ;;
 
-(** [print_signature] writes all the necessary axioms and builtin to use SKonverto
-    NOTE: the builtins are not written! [TODO] *)
-let print_signature fmt stmt =
+(** [print_builtin] writes all the necessary axioms and builtin to use SKonverto *)
+let print_builtin fmt stmt =
   match stmt.Statement.descr with
   | Statement.Antecedent t ->
     (* Printf.printf "@.@.@.@.BIG TRY | "; *)
@@ -461,7 +460,7 @@ let print_signature fmt stmt =
         | Some id -> name_to_string (Id.name id) (* Name of the axiom *)
         | None -> "unknown"
       in
-      write_signature fmt name new_s;
+      write_builtin fmt name new_s;
       (* Format.fprintf fmt "%a@." Term.print t; *)
       (* Printf.printf "%s@." (term_to_string t); *)
   | _ -> ()
@@ -485,13 +484,14 @@ let rec add_skolem_formula fmt n b =
     end
 ;;
 
-(** [output_signature] iterates print of the statements in the file [out] of all the statements in [statements] *)
-let output_signature out statements = 
+(** [output_builtin] iterates print of the statements in the file [out] of all the statements in [statements] *)
+let output_builtin out statements = 
   let fmt = Format.formatter_of_out_channel out in
-  Format.fprintf fmt "require open Logic.Zenon.FOL Logic.Zenon.LL Logic.Zenon.ND Logic.Zenon.ND_eps Logic.Zenon.ND_eps_full Logic.Zenon.ND_eps_aux Logic.Zenon.LL_ND Logic.Zenon.zen;@.@.";
+  Format.fprintf fmt "require open Logic.Zenon.FOL Logic.Zenon.LL Logic.Zenon.ND Logic.Zenon.ND_eps Logic.Zenon.ND_eps_full Logic.Zenon.ND_eps_aux Logic.Zenon.LL_ND Logic.Zenon.zen;\n\n";
+  Format.fprintf fmt "require open skolem.signature;\nrequire open skolem.proof;\n\n\n// Axioms\n\n";
   List.iter
     (fun stmt ->
-      print_signature fmt stmt;
+      print_builtin fmt stmt;
       Format.fprintf fmt "")
     statements;
   Format.fprintf fmt "@.@.// Other builtin@.@.builtin \"Formula\" ≔ zenon_G;\nbuiltin \"⇒\" ≔ ⇒;\nbuiltin \"∀\" ≔ ∀;\nbuiltin \"∃\" ≔ ∃;\nbuiltin \"τ\" ≔ τ;\nbuiltin \"ϵ\" ≔ ϵ;\nbuiltin \"⊥\" ≔ ⊥;\nbuiltin \"∃E\" ≔ ∃E;\nbuiltin \"κ\" ≔ κ;\n";
@@ -522,14 +522,14 @@ let () =
       then Printf.printf "Skolemized TPTP file written to %s\n" output_file
     );
 
-    (* Creation of the file 'signature.lp' *)
-    let file_name = "signature.lp" in
-    if Sys.file_exists file_name then Sys.remove file_name;
-    let signature_file = open_out_gen [Open_creat; Open_text; Open_append] 0o666 file_name in
+    (* Creation of the file 'builtin.lp' *)
+    let file_name_builtin = "builtin.lp" in
+    if Sys.file_exists file_name_builtin then Sys.remove file_name_builtin;
+    let builtin_file = open_out_gen [Open_creat; Open_text; Open_append] 0o666 file_name_builtin in
 
-    (* Update of the file 'signature.lp' *)
-    output_signature signature_file statements;
-    close_out signature_file;
-    if file_name <> "-" then Printf.printf "Signature written to %s\n" file_name;
+    (* Update of the file 'builtin.lp' *)
+    output_builtin builtin_file statements;
+    close_out builtin_file;
+    if file_name_builtin <> "-" then Printf.printf "Builtin written to %s\n" file_name_builtin;
   )
 ;;

@@ -3,4 +3,6 @@ test/*.lp
 zenon_modulo
 dolmen_skolemize
 signature.lp
+builtin.lp
 bin/ttf.ml
+.lp
