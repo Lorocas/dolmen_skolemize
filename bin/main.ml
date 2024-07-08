@@ -246,11 +246,12 @@ let skolemize_statement stmt =
     { stmt with
       Statement.descr = Statement.Antecedent (transform_connectives skolemized)
     }
-  | Statement.Consequent t ->
+  (* Skolemize or not the conjecture *)
+  (* | Statement.Consequent t ->
     let skolemized = skolemize_term true S.empty t in
     { stmt with
       Statement.descr = Statement.Consequent (transform_connectives skolemized)
-    }
+    } *)
   | Statement.Plain t ->
     let skolemized = skolemize_term false S.empty t in
     { stmt with Statement.descr = Statement.Plain (transform_connectives skolemized) }
@@ -273,6 +274,7 @@ let rec print_term fmt term =
      | Term.Imply -> Format.fprintf fmt "=>"
      | Term.Equiv -> Format.fprintf fmt "<=>"
      | Term.Eq -> Format.fprintf fmt "="
+     | Term.Distinct -> Format.fprintf fmt "!="
      | _ -> Format.fprintf fmt "%a" Term.print term)
   | Term.App (f, args) ->
     (match f.Term.term with
@@ -301,6 +303,20 @@ let rec print_term fmt term =
        (match args with
         | [ left; right ] ->
           Format.fprintf fmt "(%a = %a)" print_term left print_term right
+        | _ ->
+          Format.fprintf
+            fmt
+            "%a(%a)"
+            print_term
+            f
+            (Format.pp_print_list
+               ~pp_sep:(fun fmt () -> Format.fprintf fmt ",")
+               print_term)
+            args)
+      | Term.Builtin Term.Distinct ->
+       (match args with
+        | [ left; right ] ->
+          Format.fprintf fmt "(%a != %a)" print_term left print_term right
         | _ ->
           Format.fprintf
             fmt
@@ -400,8 +416,9 @@ let print_statement fmt stmt =
     Format.pp_print_flush buf_formatter ();
     (* Vérifie si la sortie contient "f_" *)
     let contains_f_ = buffer_contains buffer "f_" in
+    let contains_c_ = buffer_contains buffer "c_" in (* If the constant are considered as a skolem formula *)
     (* Formate en fonction du résultat de la vérification *)
-    if contains_f_ then begin
+    if contains_f_ || contains_c_ then begin
       Format.fprintf fmt "fof(sk_%s, axiom, %a)." name print_term t;
       (* write_signature name t *)
     end
@@ -437,7 +454,7 @@ let output_skolemized_statements out statements =
 (** [write_signature] writes the signature to a file named 'signature.lp'. 
     NOTE: the file is created in the same repersitory of the executable 'dolmen_skolemize' *)
 let write_builtin fmt name s =
-  Printf.printf "WRITE_BUILTIN | %s\n" name;
+  (* Printf.printf "WRITE_BUILTIN | %s\n" name; *)
   let builtin = Format.sprintf "symbol %s : ϵ %s;" name s in
   Format.fprintf fmt "%s\n" builtin;
   Format.fprintf fmt "builtin \"Axiom\" ≔ %s;\n" name;
