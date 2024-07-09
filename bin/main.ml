@@ -39,7 +39,7 @@ let contains_substring s sub =
 let modify_string s =
   let len = String.length s in
   let buffer = Buffer.create len in
-  let quantifiers = ["∀"; "∃"] in
+  let quantifiers = ["∀"; "∃"; "=="] in
   let rec aux i =
     if i >= len then ()
     else
@@ -49,9 +49,15 @@ let modify_string s =
       ) quantifiers in
       match found with
       | Some q ->
+          if q = "==" then begin 
+            Buffer.add_char buffer '='; 
+            aux (i + String.length q)
+          end
+          else begin
           Buffer.add_char buffer '`';
           Buffer.add_string buffer q;
           aux (i + String.length q)
+          end
       | None ->
           let c = s.[i] in
           if c = '.' then Buffer.add_char buffer ',' (* Remplace les points par des virgules *)
