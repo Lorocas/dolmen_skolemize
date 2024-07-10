@@ -1,2 +1,4 @@
 (test
- (name test_dolmen_skolemize))
+  (name test_dolmen_skolemize)
+  (modules test_dolmen_skolemize)
+  (libraries alcotest))
