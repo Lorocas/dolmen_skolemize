@@ -27,7 +27,13 @@ You can try the parser:
 ./delmon_skolemize test/reflexif.p test/reflexif_dolmen.p
 ```
 
-You can also delete `_buid` and the executable generated:
+Plus, you can check if all the problems in the `test` repersitory parse the file (not very effective):
+
+```bash
+dune runtest
+```
+
+Finally, you can also delete `_buid` and the executable generated:
 
 ```bash
 make clean
