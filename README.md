@@ -9,6 +9,7 @@ Dolmen_Skolemize parses the FOF formulas from a TPTP problem by skolemizing them
 This depends on:
 - `OCaml`
 - `Dolmen`
+- **Optional** | `Alcotest`
 
 Check the installation of [`Dolmen`](<https://github.com/Gbury/dolmen/blob/master/README.md>).
 
@@ -27,7 +28,7 @@ You can try the parser:
 ./delmon_skolemize test/reflexif.p test/reflexif_dolmen.p
 ```
 
-Plus, you can check if all the problems in the `test` repersitory parse the file (not very effective):
+Plus, you can check if all the problems in the `test` repersitory parse the file (not very effective) using `Alcotest`:
 
 ```bash
 dune runtest
