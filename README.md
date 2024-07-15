@@ -28,13 +28,15 @@ You can try the parser:
 ./delmon_skolemize test/reflexif.p test/reflexif_dolmen.p
 ```
 
+The option `-context` allows you to know where are the new parsed file and the file `builtin.lp`.
+
 Plus, you can check if all the problems in the `test` repersitory parse the file (not very effective) using `Alcotest`:
 
 ```bash
 dune runtest
 ```
 
-Finally, you can also delete `_buid` and the executable generated:
+Finally, you can also delete `_build` and the generated executable:
 
 ```bash
 make clean

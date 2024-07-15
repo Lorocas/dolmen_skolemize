@@ -528,31 +528,52 @@ let () =
   then Printf.printf "Usage: %s <input_file> <output_file>\n" Sys.argv.(0)
   else (
     (* Read arguments *)
-    let input_file = Sys.argv.(1) in
-    let output_file = Sys.argv.(2) in
-    let _, statements = TptpParser.parse_file input_file in
+    let context_mode = ref false in
+    let input_file = ref "" in
+    let output_file = ref "" in
 
-    (* Parse and skolemize the problem *)
-    let skolemized_statements = List.map skolemize_statement statements in
-    if output_file = "-"
-    then output_skolemized_statements stdout skolemized_statements
-    else (
-      let out = open_out output_file in
-      (* output_essai out statements; *)
-      output_skolemized_statements out skolemized_statements;
-      close_out out;
-      if output_file <> "-"
-      then Printf.printf "Skolemized TPTP file written to %s\n" output_file
-    );
+    (* Parse command line arguments *)
+    let i = ref 1 in
+    while !i < Array.length Sys.argv do
+      match Sys.argv.(!i) with
+      | "-context" -> context_mode := true; incr i
+      | arg ->
+        if !input_file = "" then input_file := arg
+        else if !output_file = "" then output_file := arg;
+        incr i
+    done;
 
-    (* Creation of the file 'builtin.lp' *)
-    let file_name_builtin = "builtin.lp" in
-    if Sys.file_exists file_name_builtin then Sys.remove file_name_builtin;
-    let builtin_file = open_out_gen [Open_creat; Open_text; Open_append] 0o666 file_name_builtin in
+    (* Check if input and output files are provided *)
+    if !input_file = "" || !output_file = ""
+    then Printf.printf "Usage: %s <input_file> <output_file>\n" Sys.argv.(0)
+    else 
+      let _, statements = TptpParser.parse_file !input_file in
 
-    (* Update of the file 'builtin.lp' *)
-    output_builtin builtin_file statements;
-    close_out builtin_file;
-    if file_name_builtin <> "-" then Printf.printf "Builtin written to %s\n" file_name_builtin;
+      (* Parse and skolemize the problem *)
+      let skolemized_statements = List.map skolemize_statement statements in
+      if !output_file = "-"
+      then output_skolemized_statements stdout skolemized_statements
+      else begin
+        let out = open_out !output_file in
+        (* output_essai out statements; *)
+        output_skolemized_statements out skolemized_statements;
+        close_out out;
+        if !output_file <> "-" then 
+          if !context_mode then 
+            Printf.printf "Skolemized TPTP file written %s/%s\n" (Sys.getcwd ()) !output_file
+      end;
+
+      (* Creation of the file 'builtin.lp' *)
+      let file_name_builtin = "builtin.lp" in
+      if Sys.file_exists file_name_builtin then Sys.remove file_name_builtin;
+      let builtin_file = open_out_gen [Open_creat; Open_text; Open_append] 0o666 file_name_builtin in
+
+      (* Update of the file 'builtin.lp' *)
+      output_builtin builtin_file statements;
+      close_out builtin_file;
+      if file_name_builtin <> "-" then 
+        if !context_mode then 
+          Printf.printf "Builtin written to %s/%s\n" (Sys.getcwd ()) file_name_builtin;
+    
   )
 ;;

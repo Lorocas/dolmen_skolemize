@@ -1,10 +1,9 @@
 _build
 test/*.lp
+test/*_dolmen.p
 zenon_modulo
 dolmen_skolemize
 signature.lp
 builtin.lp
 bin/ttf.ml
 .lp
-new_example.p
-grade_dolmen.p
