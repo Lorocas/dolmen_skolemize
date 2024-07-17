@@ -457,7 +457,7 @@ let output_skolemized_statements out statements =
     statements
 ;;
 
-(** [write_signature] writes the signature to a file named 'signature.lp'. 
+(** [write_builtin] writes the builtin to a file named 'builtin.lp'. 
     NOTE: the file is created in the same repersitory of the executable 'dolmen_skolemize' *)
 let write_builtin fmt name s =
   (* Printf.printf "WRITE_BUILTIN | %s\n" name; *)
@@ -489,7 +489,11 @@ let print_builtin fmt stmt =
   | _ -> ()
 ;;
 
-(* Add all the skolem formula in the signature file *)
+(** [add_skolem_formula] Add all the skolem formula in the signature file 
+    @param fmt the direction of the output file
+    @param n [int] of the used variable
+    @param b [bool], [true] if it's a variable like 'f_n', and [false] if it's a variable like 'c_n'
+*)
 let rec add_skolem_formula fmt n b =
   if b then 
     if n = 0 then ()
