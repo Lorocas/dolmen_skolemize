@@ -1,4 +1,5 @@
 open Dolmen_std
+open !StrManipulation
 
 module TptpParser =
   Dolmen_tptp_v6_3_0.Make (Dolmen.Std.Loc) (Dolmen.Std.Id) (Dolmen.Std.Term)
@@ -12,61 +13,11 @@ module S = Set.Make (struct
 (* let fresh_var_counter = ref 0 *)
 let fresh_const_counter = ref 0
 let fresh_func_counter = ref 0
-(* let term_to_string term = Format.asprintf "%a" Term.print term *)
-let name_to_string name = Format.asprintf "%a" Name.print name (* Nom des axiomes et de la conjecture *)
-(* let statement_to_string stmt = Format.asprintf "%a" Statement.print stmt *)
 
 (* let fresh_var () =
   incr fresh_var_counter;
   Id.mk Id.var ("X_" ^ string_of_int !fresh_var_counter)
 ;; *)
-
-let term_to_string term = Format.asprintf "%a" Term.print term;;
-
-(** [contains_substring] returns a [bool]. Returns [true] if [sub] is a substring of [s], [false] otherwise. *)
-let contains_substring s sub =
-  let len_s = String.length s in
-  let len_sub = String.length sub in
-  let rec aux i =
-    if i > len_s - len_sub then false
-    else if String.sub s i len_sub = sub then true
-    else aux (i + 1)
-  in
-  aux 0
-;;
-
-(** [modify_string] adds [`] before [∀] and [∃], and replace points by commas *)
-let modify_string s =
-  let len = String.length s in
-  let buffer = Buffer.create len in
-  let quantifiers = ["∀"; "∃"; "=="] in
-  let rec aux i =
-    if i >= len then ()
-    else
-      let found = List.find_opt (fun q ->
-        let len_q = String.length q in
-        i + len_q <= len && String.sub s i len_q = q
-      ) quantifiers in
-      match found with
-      | Some q ->
-          if q = "==" then begin 
-            Buffer.add_char buffer '='; 
-            aux (i + String.length q)
-          end
-          else begin
-          Buffer.add_char buffer '`';
-          Buffer.add_string buffer q;
-          aux (i + String.length q)
-          end
-      | None ->
-          let c = s.[i] in
-          if c = '.' then Buffer.add_char buffer ',' (* Remplace les points par des virgules *)
-          else Buffer.add_char buffer c;
-          aux (i + 1)
-  in
-  aux 0;
-  Buffer.contents buffer
-;;
 
 let fresh_const () =
   incr fresh_const_counter;
@@ -101,6 +52,10 @@ let fresh_func () =
       cases
 ;; *)
 
+(** [extract_id_from_var v] extracts the identifier from a variable [term].
+    @param v the variable [term] to extract the identifier from.
+    @return an optional identifier if the variable [term] contains one. 
+*)
 let extract_id_from_var v =
   match v.Term.term with
   | Term.Symbol id -> Some id
@@ -111,6 +66,11 @@ let extract_id_from_var v =
   | _ -> None
 ;;
 
+(** [substitute] substitutes terms in a given term based on a substitution [list].
+    @param subst the substitution [list] where each element is a pair of (identifier, term).
+    @param term the [term] in which to perform the substitutions.
+    @return the [term] with the substitutions applied. 
+*)
 let rec substitute subst term =
   match term.Term.term with
   | Term.Symbol id ->
@@ -129,6 +89,10 @@ let rec substitute subst term =
   | _ -> term
 ;;
 
+(** [transform_connectives term] transforms logical connectives in a given [term].
+    @param term the [term] in which to transform the logical connectives.
+    @return the [term] with the transformed connectives. 
+*)
 let rec transform_connectives term =
   match term.Term.term with
   | Term.App (f, args) ->
@@ -389,27 +353,13 @@ let rec print_term fmt term =
   | _ -> Format.fprintf fmt "%a" Term.print term
 ;;
 
-(** [buffer_contains] vérifie si la séquence [seq] est dans le buffer [buffer] *)
-let buffer_contains buffer seq =
-  let str = Buffer.contents buffer in
-  try
-    let len = String.length seq in
-    let rec aux i =
-      if i + len > String.length str then false
-      else if String.sub str i len = seq then true
-      else aux (i + 1)
-    in
-    aux 0
-  with Invalid_argument _ -> false
-;;
-
 (** [print_statement] écrit les axiomes et conjectures ans le nouveau fichier.
     NOTE : seul le cas des antécédents (axiomes) réécrit l'axiome avec un nouveau nom 
   *)
 let print_statement fmt stmt =
   let name =
     match stmt.Statement.id with
-    | Some id -> name_to_string (Id.name id) (* Nom de l'axiome *)
+    | Some id -> StrManipulation.name_to_string (Id.name id) (* Nom de l'axiome *)
     | None -> "unknown"
   in
   let buffer = Buffer.create 16 in
@@ -421,8 +371,8 @@ let print_statement fmt stmt =
     print_term buf_formatter t;
     Format.pp_print_flush buf_formatter ();
     (* Vérifie si la sortie contient "f_" *)
-    let contains_f_ = buffer_contains buffer "f_" in
-    let contains_c_ = buffer_contains buffer "c_" in (* If the constant are considered as a skolem formula *)
+    let contains_f_ = StrManipulation.buffer_contains buffer "f_" in
+    let contains_c_ = StrManipulation.buffer_contains buffer "c_" in (* If the constant are considered as a skolem formula *)
     (* Formate en fonction du résultat de la vérification *)
     if contains_f_ || contains_c_ then begin
       Format.fprintf fmt "fof(sk_%s, axiom, %a)." name print_term t;
@@ -472,20 +422,20 @@ let print_builtin fmt stmt =
   match stmt.Statement.descr with
   | Statement.Antecedent t ->
     (* Printf.printf "@.@.@.@.BIG TRY | "; *)
-    let s = (term_to_string t) in
+    let s = (StrManipulation.term_to_string t) in
     let sub = "∃" in
-    let result = contains_substring s sub in
+    let result = StrManipulation.contains_substring s sub in
     if result then 
-      let new_s = modify_string s in
+      let new_s = StrManipulation.modify_string s in
       (* Format.fprintf fmt "%s@." new_s; *)
       let name =
         match stmt.Statement.id with
-        | Some id -> name_to_string (Id.name id) (* Name of the axiom *)
+        | Some id -> StrManipulation.name_to_string (Id.name id) (* Name of the axiom *)
         | None -> "unknown"
       in
       write_builtin fmt name new_s;
       (* Format.fprintf fmt "%a@." Term.print t; *)
-      (* Printf.printf "%s@." (term_to_string t); *)
+      (* Printf.printf "%s@." (StrManipulation.term_to_string t); *)
   | _ -> ()
 ;;
 
