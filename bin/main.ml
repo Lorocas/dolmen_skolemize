@@ -356,7 +356,7 @@ let rec print_term fmt term =
 (** [print_statement] écrit les axiomes et conjectures ans le nouveau fichier.
     NOTE : seul le cas des antécédents (axiomes) réécrit l'axiome avec un nouveau nom 
   *)
-let print_statement fmt stmt =
+let rec print_statement fmt stmt =
   let name =
     match stmt.Statement.id with
     | Some id -> StrManipulation.name_to_string (Id.name id) (* Nom de l'axiome *)
@@ -365,6 +365,33 @@ let print_statement fmt stmt =
   let buffer = Buffer.create 16 in
   let buf_formatter = Format.formatter_of_buffer buffer in
   match stmt.Statement.descr with
+  | Statement.Include t ->
+    (* Lire le fichier associé au nom de l'axiome et print les statements de ce fichier *)
+    let which_axioms () = 
+    try
+      (* Trying in the Dolmen_skolemize project *)
+      let _, statements = TptpParser.parse_file ("test/" ^ t) in
+      statements
+    with
+      (* Trying in the SKonverto project *)
+      | _ -> 
+        try
+          (* Normal test using "make do_proof" *)
+          let _, statements = TptpParser.parse_file ("example/" ^ t) in
+          statements 
+        with
+          (* Successive tests using Alcotest *)
+          | _ ->
+          let _, statements = TptpParser.parse_file ("../example/" ^ t) in
+          statements 
+    in
+    let statements = which_axioms () in
+    let skolemized_statements = List.map skolemize_statement statements in
+    List.iter
+    (fun stmt ->
+      print_statement fmt stmt;
+      Format.fprintf fmt "@.")
+      skolemized_statements;
   | Statement.Antecedent t -> 
     (* Utilise print_term pour écrire dans le tampon *)
     (* Format.fprintf fmt "@.DEBUG2 | %a@.@." Term.print t; *)
@@ -418,8 +445,35 @@ let write_builtin fmt name s =
 ;;
 
 (** [print_builtin] writes all the necessary axioms and builtin to use SKonverto *)
-let print_builtin fmt stmt =
+let rec print_builtin fmt stmt =
   match stmt.Statement.descr with
+  | Statement.Include t ->
+    (* Lire le fichier associé au nom de l'axiome et print les statements de ce fichier *)
+    let which_axioms () = 
+    try
+      (* Trying in the Dolmen_skolemize project *)
+      let _, statements = TptpParser.parse_file ("test/" ^ t) in
+      statements
+    with
+      (* Trying in the SKonverto project *)
+      | _ ->
+        try
+          (* Normal test using "make do_proof" *)
+          let _, statements = TptpParser.parse_file ("example/" ^ t) in
+          statements 
+        with
+          (* Successive tests using Alcotest *)
+          | _ ->
+          let _, statements = TptpParser.parse_file ("../example/" ^ t) in
+          statements 
+    in
+    let statements = which_axioms () in
+    List.iter
+    (fun stmt ->
+      print_builtin fmt stmt;
+      Format.fprintf fmt "@."
+      )
+    statements;
   | Statement.Antecedent t ->
     (* Printf.printf "@.@.@.@.BIG TRY | "; *)
     let s = (StrManipulation.term_to_string t) in
