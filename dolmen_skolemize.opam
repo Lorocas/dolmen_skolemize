@@ -2,7 +2,7 @@
 opam-version: "2.0"
 synopsis: "Skolemization of a TPTP problem using Dolmen"
 description:
-  "This project provides a tool that skolemize a TPTP problem using Dolmen and creates a new file with more information named 'signature.lp. It works with SKonverto."
+  "This project provides a tool that skolemize a TPTP problem using Dolmen and creates a new file with more information named 'signature.lp'. It works with SKonverto."
 maintainer: ["Lorenzo LUCAS -- ROBLOT, Quentin PEPE"]
 authors: ["Lorenzo LUCAS -- ROBLOT, Quentin PEPE"]
 tags: ["Dolmen" "Skolemization" "Skolem"]
