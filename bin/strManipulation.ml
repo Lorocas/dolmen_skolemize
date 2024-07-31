@@ -38,7 +38,8 @@ let modify_string s =
   let len = String.length s in
   let buffer = Buffer.create len in
   let quantifiers = ["∀"; "∃"; "=="] in
-  let rec aux i =
+  (* is_first_occurence checks if this is the first time that the parser meet a quantifier in the current search *)
+  let rec aux i current_quantifier is_first_occurence =
     if i >= len then ()
     else
       let found = List.find_opt (fun q ->
@@ -49,20 +50,42 @@ let modify_string s =
       | Some q ->
           if q = "==" then begin 
             Buffer.add_char buffer '='; 
-            aux (i + String.length q)
+            aux (i + String.length q) current_quantifier false
           end
           else begin
-          Buffer.add_char buffer '`';
-          Buffer.add_string buffer q;
-          aux (i + String.length q)
+            (* Buffer.add_char buffer '`';
+            Buffer.add_string buffer q; *)
+            aux (i + String.length q) (Some q) true
           end
       | None ->
           let c = s.[i] in
-          if c = '.' then Buffer.add_char buffer ',' (* Remplace les points par des virgules *)
-          else Buffer.add_char buffer c;
-          aux (i + 1)
+          if c = '.' then begin
+            Buffer.add_char buffer ',';
+            aux (i + 1) None false
+          end else if c = ' ' then begin
+            match current_quantifier with
+            | Some q ->
+                let c2 = s.[i+1] in
+                if not (c2 = '.') then begin
+                if not is_first_occurence then begin
+                  Buffer.add_char buffer ' ';
+                  Buffer.add_char buffer ','; 
+                end;
+                Buffer.add_char buffer ' ';
+                Buffer.add_char buffer '`';
+                Buffer.add_string buffer q;
+                end;
+                Buffer.add_char buffer ' ';
+                aux (i + 1) current_quantifier false
+            | None ->
+                Buffer.add_char buffer ' ';
+                aux (i + 1) current_quantifier false
+          end else begin
+            Buffer.add_char buffer c;
+            aux (i + 1) current_quantifier false
+          end
   in
-  aux 0;
+  aux 0 None false;
   Buffer.contents buffer
 ;;
 

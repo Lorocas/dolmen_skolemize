@@ -1,6 +1,7 @@
 DUNE ?= dune
 
 .PHONY: bin install doc uninstall clean
+
 bin:
 	$(DUNE) build
 

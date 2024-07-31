@@ -373,17 +373,23 @@ let rec print_statement fmt stmt =
       let _, statements = TptpParser.parse_file ("test/" ^ t) in
       statements
     with
-      (* Trying in the SKonverto project *)
+      (* Successive tests of Dolmen_skolemize using Alcotest *)
       | _ -> 
         try
-          (* Normal test using "make do_proof" *)
-          let _, statements = TptpParser.parse_file ("example/" ^ t) in
+          let _, statements = TptpParser.parse_file ("../../../test/" ^ t) in
           statements 
         with
-          (* Successive tests using Alcotest *)
-          | _ ->
-          let _, statements = TptpParser.parse_file ("../example/" ^ t) in
-          statements 
+      (* Trying in the SKonverto project *)
+        | _ -> 
+          try
+            (* Normal test using "make do_proof" *)
+            let _, statements = TptpParser.parse_file ("example/" ^ t) in
+            statements 
+          with
+            (* Successive tests of SKonverto using Alcotest *)
+            | _ ->
+            let _, statements = TptpParser.parse_file ("../example/" ^ t) in
+            statements 
     in
     let statements = which_axioms () in
     let skolemized_statements = List.map skolemize_statement statements in
@@ -450,22 +456,28 @@ let rec print_builtin fmt stmt =
   | Statement.Include t ->
     (* Lire le fichier associé au nom de l'axiome et print les statements de ce fichier *)
     let which_axioms () = 
-    try
-      (* Trying in the Dolmen_skolemize project *)
-      let _, statements = TptpParser.parse_file ("test/" ^ t) in
-      statements
-    with
-      (* Trying in the SKonverto project *)
-      | _ ->
-        try
-          (* Normal test using "make do_proof" *)
-          let _, statements = TptpParser.parse_file ("example/" ^ t) in
-          statements 
-        with
-          (* Successive tests using Alcotest *)
-          | _ ->
-          let _, statements = TptpParser.parse_file ("../example/" ^ t) in
-          statements 
+      try
+        (* Trying in the Dolmen_skolemize project *)
+        let _, statements = TptpParser.parse_file ("test/" ^ t) in
+        statements
+      with
+        (* Successive tests of Dolmen_skolemize using Alcotest *)
+        | _ -> 
+          try
+            let _, statements = TptpParser.parse_file ("../../../test/" ^ t) in
+            statements 
+          with
+        (* Trying in the SKonverto project *)
+          | _ -> 
+            try
+              (* Normal test using "make do_proof" *)
+              let _, statements = TptpParser.parse_file ("example/" ^ t) in
+              statements 
+            with
+              (* Successive tests of SKonverto using Alcotest *)
+              | _ ->
+              let _, statements = TptpParser.parse_file ("../example/" ^ t) in
+              statements 
     in
     let statements = which_axioms () in
     List.iter
@@ -480,6 +492,7 @@ let rec print_builtin fmt stmt =
     let sub = "∃" in
     let result = StrManipulation.contains_substring s sub in
     if result then 
+      (* Printf.printf "%s" s; *)
       let new_s = StrManipulation.modify_string s in
       (* Format.fprintf fmt "%s@." new_s; *)
       let name =
