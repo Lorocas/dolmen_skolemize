@@ -21,12 +21,12 @@ let fresh_func_counter = ref 0
 
 let fresh_const () =
   incr fresh_const_counter;
-  Id.mk Id.term ("c_" ^ string_of_int !fresh_const_counter)
+  Id.mk Id.term ("skc_" ^ string_of_int !fresh_const_counter)
 ;;
 
 let fresh_func () =
   incr fresh_func_counter;
-  Id.mk Id.term ("f_" ^ string_of_int !fresh_func_counter)
+  Id.mk Id.term ("skf_" ^ string_of_int !fresh_func_counter)
 ;;
 
 (* let rec collect_free_vars term =
@@ -404,8 +404,8 @@ let rec print_statement fmt stmt =
     print_term buf_formatter t;
     Format.pp_print_flush buf_formatter ();
     (* Vérifie si la sortie contient "f_" *)
-    let contains_f_ = StrManipulation.buffer_contains buffer "f_" in
-    let contains_c_ = StrManipulation.buffer_contains buffer "c_" in (* If the constant are considered as a skolem formula *)
+    let contains_f_ = StrManipulation.buffer_contains buffer "skf_" in
+    let contains_c_ = StrManipulation.buffer_contains buffer "skc_" in (* If the constant are considered as a skolem formula *)
     (* Formate en fonction du résultat de la vérification *)
     if contains_f_ || contains_c_ then begin
       Format.fprintf fmt "fof(sk_%s, axiom, %a)." name print_term t;
@@ -515,15 +515,15 @@ let rec add_skolem_formula fmt n b =
   if b then 
     if n = 0 then ()
     else begin
-      Format.fprintf fmt "builtin \"Skolem\" ≔ f_%d;\n" n; 
-      (* Printf.printf "f_%d printed!" n; *)
+      Format.fprintf fmt "builtin \"Skolem\" ≔ skf_%d;\n" n; 
+      (* Printf.printf "skf_%d printed!" n; *)
       add_skolem_formula fmt (n-1) true;
     end
   else 
     if n = 0 then ()
     else begin
-      Format.fprintf fmt "builtin \"Skolem\" ≔ c_%d;\n" n; 
-      (* Printf.printf "c_%d printed!" n; *)
+      Format.fprintf fmt "builtin \"Skolem\" ≔ skc_%d;\n" n; 
+      (* Printf.printf "skc_%d printed!" n; *)
       add_skolem_formula fmt (n-1) false;
     end
 ;;
